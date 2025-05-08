@@ -350,7 +350,7 @@
     "description": "Database adapter for MongoDB enabling document storage with query capabilities.",
     "custom_preview": "/eliza/logos/mongodb.png"
   },
-  "@elizaos-plugins/adapter-postgres": {
+  "@elizaos/adapter-postgres": {
     "description": "Database adapter for PostgreSQL with full relational database capabilities.",
     "custom_preview": "/eliza/logos/postgres.jpg"
   },

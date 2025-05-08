@@ -1,4 +1,4 @@
-[@elizaos/core v0.25.8](../index.md) / trimTokens
+[@elizaos/core v0.25.9](../index.md) / trimTokens
 
 # Function: trimTokens()
 
