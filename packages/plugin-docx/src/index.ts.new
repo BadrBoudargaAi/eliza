@@ -1,0 +1,136 @@
+import type { Plugin, Action, IAgentRuntime, Memory } from '@elizaos/core';
+import * as path from 'path';
+import { DocxService } from './docx-service.js';
+
+type ContentBlockType = 'heading1' | 'heading2' | 'heading3' | 'paragraph' | 'table';
+
+interface ContentBlock {
+    type: ContentBlockType;
+    text: string;
+    style?: {
+        bold?: boolean;
+        italic?: boolean;
+    };
+}
+
+interface GenerateDocData {
+    title?: string;
+    content: ContentBlock[];
+    fileName: string;
+}
+
+interface GenerateDocMemory extends Memory {
+    content: {
+        text: string;
+        data?: GenerateDocData;
+    };
+}
+
+const generateDocumentAction: Action = {
+    name: "GENERATE_DOC",
+    description: "Generates a Word document with the provided content",
+    similes: ["CREATE_DOCUMENT", "GENERATE_DOCUMENT", "CREATE_DOC", "MAKE_DOCUMENT", "WRITE_DOCUMENT"],
+    validate: async (runtime: IAgentRuntime, _message: Memory) => {
+        const docPath = runtime.getSetting('docx.outputPath');
+        return !!docPath;
+    },
+    handler: async (runtime: IAgentRuntime, message: GenerateDocMemory) => {
+        try {
+            // Default output path
+            const outputPath = runtime.getSetting('docx.outputPath') || path.join(process.cwd(), 'documents');
+            
+            // Get content data with defaults
+            let docContent = message.content.data;
+            if (!docContent) {
+                const text = message.content.text;
+                const date = new Date();
+                const defaultFileName = `document-${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}.docx`;
+
+                docContent = {
+                    title: text.split(/[.,!?]/)[0].trim(),
+                    fileName: defaultFileName,
+                    content: [
+                        {
+                            type: 'heading1',
+                            text: text.split(/[.,!?]/)[0].trim(),
+                            style: { bold: true }
+                        },
+                        {
+                            type: 'paragraph',
+                            text: `Generated on: ${date.toLocaleDateString()}`,
+                            style: { italic: true }
+                        },
+                        {
+                            type: 'paragraph',
+                            text: text
+                        }
+                    ]
+                };
+            } else if (!docContent.fileName) {
+                docContent.fileName = 'document.docx';
+            }
+
+            const filePath = path.join(outputPath, docContent.fileName);
+            
+            // Create the document
+            const docxService = new DocxService();
+            await docxService.generateDocument(filePath, {
+                title: docContent.title,
+                content: docContent.content
+            });
+
+            // Log success
+            await runtime.messageManager.createMemory({
+                content: { text: `Document generated successfully at: ${filePath}` },
+                roomId: message.roomId,
+                userId: runtime.agentId,
+                agentId: runtime.agentId
+            });
+
+            return true;
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            console.error('Error in generateDocumentAction:', errorMessage);
+            
+            await runtime.messageManager.createMemory({
+                content: { text: `Failed to generate document: ${errorMessage}` },
+                roomId: message.roomId,
+                userId: runtime.agentId,
+                agentId: runtime.agentId
+            });
+            
+            return false;
+        }
+    },
+    examples: [{
+        memory: {
+            roomId: "example-room",
+            userId: "example-user",
+            agentId: "example-agent",
+            content: {
+                text: "Generate a document with meeting notes",
+                data: {
+                    title: "Meeting Notes",
+                    content: [{
+                        type: "heading1",
+                        text: "Project Status Meeting",
+                        style: { bold: true }
+                    }, {
+                        type: "paragraph",
+                        text: "Action items discussed:",
+                        style: { italic: true }
+                    }],
+                    fileName: "meeting-notes.docx"
+                }
+            }
+        }
+    }]
+};
+
+export const docxPlugin: Plugin = {
+    name: "@elizaos/plugin-docx",
+    description: "Plugin for generating Word documents",
+    actions: [generateDocumentAction]
+};
+
+export default docxPlugin;

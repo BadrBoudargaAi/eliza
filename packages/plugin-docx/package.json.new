@@ -1,0 +1,20 @@
+{
+  "name": "@elizaos/plugin-docx",
+  "version": "0.25.9",
+  "description": "Plugin for generating Word documents",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "lint": "eslint src/**/*.ts",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@elizaos/core": "workspace:*",
+    "docx": "^8.5.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  }
+}

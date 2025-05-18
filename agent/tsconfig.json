@@ -1,16 +1,30 @@
 {
-    "extends": "../packages/core/tsconfig.json",
     "compilerOptions": {
         "outDir": "dist",
         "rootDir": ".",
-        "module": "ESNext",
-        "moduleResolution": "Bundler",
-        "types": ["node", "jest"]
+        "module": "NodeNext",
+        "moduleResolution": "NodeNext",
+        "target": "ES2020",
+        "lib": ["ES2020"],
+        "types": ["node", "jest"],
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true,
+        "strict": false,
+        "resolveJsonModule": true,
+        "allowJs": true,
+        "checkJs": false,
+        "noEmitOnError": false,
+        "allowSyntheticDefaultImports": true,
+        "importHelpers": true,
+        "composite": true,
+        "declaration": true,
+        "sourceMap": true,
+        "isolatedModules": true
     },
     "ts-node": {
-        "experimentalSpecifierResolution": "node",
-        "transpileOnly": true,
-        "esm": true
+        "esm": true,
+        "experimentalSpecifierResolution": "node"
     },
     "include": ["src"]
 }

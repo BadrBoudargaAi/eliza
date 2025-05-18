@@ -22,6 +22,7 @@ import {
 import { defaultCharacter } from "./defaultCharacter.ts";
 
 import { bootstrapPlugin } from "@elizaos/plugin-bootstrap";
+import { jiraPlugin } from "@elizaos/plugin-jira";
 import JSON5 from 'json5';
 
 import fs from "fs";

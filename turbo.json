@@ -9,8 +9,11 @@
                 "@elizaos/plugin-solana#build",
                 "@elizaos/plugin-direct#build"
             ]
+        },        "build": {
+            "outputs": ["dist/**"],
+            "dependsOn": ["^@elizaos/core#build"]
         },
-        "build": {
+        "@elizaos/plugin-docx#build": {
             "outputs": ["dist/**"],
             "dependsOn": ["^@elizaos/core#build"]
         },
