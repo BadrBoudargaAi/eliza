@@ -46,7 +46,7 @@ const requestConfirmation = async (runtime: IAgentRuntime, message: Memory, text
 };
 
 // Action Implementations
-const createEpicAction: Action = {
+export const createEpicAction: Action = {
     name: "jira.createEpic",
     description: "Creates a new epic in Jira",
     similes: ["CREATE_EPIC", "NEW_EPIC"],
@@ -120,9 +120,9 @@ interface RecentMemory extends Memory {
     }
 }
 
-const createStoryAction: Action = {
+export const createStoryAction: Action = {
     name: "jira.createUserStory",
-    description: "Creates a new user story in Jira",
+    description: "Creates a new user story in Jira", 
     similes: ["CREATE_USER_STORY", "NEW_STORY"],    examples: [[{
             user: "User",
             content: {
@@ -254,8 +254,8 @@ interface FormatStoryMemory extends Memory {
     content: FormatStoryContent;
 }
 
-const formatStoryAction: Action = {
-    name: "jira.formatUserStory", 
+export const formatStoryAction: Action = {
+    name: "jira.formatUserStory",
     description: "Formats user story requirements into a structured format without creating a JIRA ticket",
     similes: ["FORMAT_USER_STORY", "FORMAT_REQUIREMENTS"],
     examples: [

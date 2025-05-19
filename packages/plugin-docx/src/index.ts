@@ -1,46 +1,50 @@
-import type { Plugin, Action, IAgentRuntime } from '@elizaos/core';
+import type { Plugin, Action, IAgentRuntime, Memory } from '@elizaos/core';
 import { elizaLogger } from '@elizaos/core';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { existsSync } from 'fs';
+import { DocxService } from './docx-service.js';
 
 export interface DocxPluginConfig {
     outputDir?: string;
 }
 
-interface CreateDocumentParams {
-    title: string;
-    content: string;
+interface GenerateDocData {
+    fileName: string;
+    title?: string;
+    content: Array<{
+        type: 'heading1' | 'heading2' | 'heading3' | 'paragraph' | 'table';
+        text?: string;
+        style?: {
+            bold?: boolean;
+            italic?: boolean;
+        };
+        tableData?: {
+            headers: string[];
+            rows: string[][];
+        };
+    }>;
 }
 
 const DEFAULT_OUTPUT_DIR = path.resolve('C:\\Users\\badrb\\elizaos-V2\\Doc');
 
-const isValidCreateDocumentParams = (params: any): params is CreateDocumentParams => {
-    return (
-        params &&
-        typeof params.title === 'string' &&
-        typeof params.content === 'string'
-    );
-};
-
 export class DocxPlugin implements Plugin {
-    name = 'docx';
+    name = '@elizaos/plugin-docx';
     description = 'Plugin for generating Word documents';
     config: DocxPluginConfig = { outputDir: DEFAULT_OUTPUT_DIR };
     runtime: IAgentRuntime;
-    private docxLib: any;
+    private docxService: DocxService;
 
     constructor(config: DocxPluginConfig = {}) {
         elizaLogger.info('DocxPlugin constructor called with config:', config);
         this.config = { ...this.config, ...config };
+        this.docxService = new DocxService();
         elizaLogger.info('Final config:', this.config);
     }
 
     async init(runtime: IAgentRuntime): Promise<void> {
         elizaLogger.info('DocxPlugin init started');
         this.runtime = runtime;
-        this.docxLib = await import('docx');
-        elizaLogger.info('Initialized DocxPlugin with runtime');
 
         // Ensure output directory exists
         const outputDir = path.resolve(this.config.outputDir || DEFAULT_OUTPUT_DIR);
@@ -56,6 +60,7 @@ export class DocxPlugin implements Plugin {
             const testFile = path.join(outputDir, '.write-test');
             elizaLogger.debug(`Testing write permissions with file: ${testFile}`);
             await fs.writeFile(testFile, '');
+            await fs.unlink(testFile);
 
             elizaLogger.info('DocxPlugin initialization successful');
         } catch (err) {
@@ -64,104 +69,84 @@ export class DocxPlugin implements Plugin {
         }
     }
 
-    async createDocument(params: CreateDocumentParams): Promise<string> {
-        try {
-            const { title, content } = params;
-            elizaLogger.info(`Starting document creation for title: ${title}`);
-            elizaLogger.info(`Using output directory: ${this.config.outputDir}`);
-
-            const { Document, Paragraph, TextRun, Packer } = this.docxLib;
-            elizaLogger.info('Loaded docx classes');
-
-            // Create document
-            const doc = new Document({
-                sections: [{
-                    children: [
-                        new Paragraph({
-                            children: [
-                                new TextRun({
-                                    text: title,
-                                    bold: true,
-                                    size: 24
-                                })
-                            ]
-                        }),
-                        new Paragraph({
-                            children: [
-                                new TextRun({
-                                    text: content
-                                })
-                            ]
-                        })
-                    ]
-                }]
-            });
-            elizaLogger.info('Document object created');
-
-            // Generate filename from title
-            const filename = path.join(this.config.outputDir || DEFAULT_OUTPUT_DIR, `${title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.docx`);
-            elizaLogger.info(`Will save document to: ${filename}`);
-
-            // Create buffer
-            const buffer = await Packer.toBuffer(doc);
-            elizaLogger.info(`Document buffer created, size: ${buffer.length} bytes`);
-            
-            // Save the document
-            await fs.writeFile(filename, buffer);
-            elizaLogger.info('Document file written to disk');
-
-            // Verify file exists and has content
-            if (existsSync(filename)) {
-                const stats = await fs.stat(filename);
-                elizaLogger.info(`Document created successfully. File size: ${stats.size} bytes`);
-            } else {
-                throw new Error('Document creation failed - file does not exist');
-            }
-
-            return filename;
-        } catch (error) {
-            elizaLogger.error('Error in createDocument:', error);
-            if (error.code === 'EACCES') {
-                elizaLogger.error('Permission denied - cannot write to directory');
-            }
-            throw error;
-        }
-    }
-
     getActions(): Action[] {
         return [
             {
-                name: 'create-document',
-                similes: ['create a document', 'make a document', 'generate a document'],
-                description: 'Create a Word document with a title and content',
-                examples: [[
-                    {
-                        user: 'user',
-                        content: {
-                            text: 'Create a document titled "Meeting Notes" with content "Topics discussed: AI and ML"'
+                name: 'docx.generateDocument',
+                similes: ['create document', 'generate document', 'create doc', 'make document', 'write document'],
+                description: 'Generates a Word document with provided content',
+                handler: async (runtime: IAgentRuntime, message: Memory) => {
+                    try {
+                        const data = message.content.data as GenerateDocData;
+                        if (!data || !data.fileName || !Array.isArray(data.content)) {
+                            throw new Error('Invalid document data structure');
+                        }
+
+                        const filePath = path.join(this.config.outputDir || DEFAULT_OUTPUT_DIR, data.fileName);
+                        
+                        await this.docxService.generateDocument({
+                            fileName: data.fileName,
+                            outputPath: this.config.outputDir || DEFAULT_OUTPUT_DIR,
+                            title: data.title,
+                            content: data.content
+                        });
+
+                        await runtime.messageManager.createMemory({
+                            content: { 
+                                text: `Document generated successfully and saved to: ${filePath}` 
+                            },
+                            roomId: message.roomId,
+                            userId: runtime.agentId,
+                            agentId: runtime.agentId
+                        });
+
+                        return true;
+                    } catch (error) {
+                        const errorMessage = error instanceof Error ? error.message : String(error);
+                        elizaLogger.error('Error in generateDocument action:', errorMessage);
+                        
+                        await runtime.messageManager.createMemory({
+                            content: { text: `Failed to generate document: ${errorMessage}` },
+                            roomId: message.roomId,
+                            userId: runtime.agentId,
+                            agentId: runtime.agentId
+                        });
+                        
+                        return false;
+                    }
+                },
+                validate: async (runtime: IAgentRuntime, message: Memory) => {
+                    const text = message.content.text.toLowerCase();
+                    return text.includes('document') || 
+                           text.includes('doc') || 
+                           text.includes('requirements');
+                },
+                examples: [[{
+                    user: "user1",
+                    content: {
+                        text: "Generate a requirements document"
+                    }
+                }, {
+                    user: "Assistant",
+                    content: {
+                        text: "I'll generate a requirements document for you.",
+                        action: "docx.generateDocument",
+                        data: {
+                            fileName: "requirements.docx",
+                            title: "Requirements Document",
+                            content: [{
+                                type: "heading1",
+                                text: "Requirements Document",
+                                style: { bold: true }
+                            }, {
+                                type: "paragraph",
+                                text: "This document outlines the requirements for the project."
+                            }]
                         }
                     }
-                ]],
-                handler: async (runtime: IAgentRuntime, params: any) => {
-                    if (!isValidCreateDocumentParams(params)) {
-                        throw new Error('Invalid parameters for create-document action');
-                    }
-                    return this.createDocument(params);
-                },
-                validate: async (params: any) => {
-                    return isValidCreateDocumentParams(params);
-                }
+                }]]
             }
         ];
-    }
-
-    async runAction(action: string, params: any): Promise<any> {
-        switch (action) {
-            case 'create-document':
-                return this.createDocument(params);
-            default:
-                throw new Error(`Unknown action: ${action}`);
-        }
     }
 }
 
