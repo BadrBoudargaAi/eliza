@@ -23,6 +23,7 @@
   "dependencies": {
     "@elizaos/core": "workspace:*",
     "@types/pg": "8.11.10",
+    "jira.js": "^5.2.0",
     "pg": "8.13.1",
     "uuid": "^11.1.0"
   },

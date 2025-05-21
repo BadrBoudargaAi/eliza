@@ -53,6 +53,7 @@
         "fastembed": "1.14.1",
         "glob": "11.0.0",
         "handlebars": "^4.7.8",
+        "jira.js": "^5.2.0",
         "js-sha1": "0.7.0",
         "js-tiktoken": "1.0.15",
         "ollama-ai-provider": "0.16.1",

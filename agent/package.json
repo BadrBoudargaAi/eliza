@@ -24,6 +24,7 @@
         "@elizaos/plugin-docx": "workspace:*",
         "@elizaos/plugin-jira": "workspace:*",
         "@types/node": "^22.13.5",
+        "jira.js": "^5.2.0",
         "json5": "2.2.3",
         "ts-node": "^10.9.2",
         "yargs": "17.7.2"

@@ -940,23 +940,57 @@ export class AgentRuntime implements IAgentRuntime {
             );
             throw error; // Re-throw to let caller handle it
         }
-    }
-
-    getSetting(key: string) {
-        // check if the key is in the character.settings.secrets object
+    }    getSetting(key: string) {
+        // Handle nested paths like 'configs.jira.projectKey'
+        const parts = key.split('.');
+        
+        elizaLogger.debug(`Looking for setting: ${key}`, {
+            parts,
+            hasSettings: !!this.character.settings,
+            hasSecrets: !!this.character.settings?.secrets
+        });
+        
+        // First try the full path in secrets
         if (this.character.settings?.secrets?.[key]) {
+            elizaLogger.debug(`Found setting ${key} in secrets`);
             return this.character.settings.secrets[key];
         }
-        // if not, check if it's in the settings object
+
+        // Then try to traverse nested paths in settings
+        if (this.character.settings) {
+            let current: any = this.character.settings;
+            
+            // Log current structure for debugging
+            elizaLogger.debug('Current settings structure:', JSON.stringify(current, null, 2));
+            
+            for (const part of parts) {
+                if (current === undefined || current === null) {
+                    elizaLogger.debug(`Breaking at part ${part} - current is undefined/null`);
+                    break;
+                }
+                elizaLogger.debug(`Checking part: ${part}, current keys: ${Object.keys(current)}`);
+                current = current[part];
+            }
+            
+            if (current !== undefined && current !== null && current !== this.character.settings) {
+                elizaLogger.debug(`Found setting ${key} with value:`, current);
+                return current;
+            }
+        }
+        
+        // Check top-level settings
         if (this.character.settings?.[key]) {
+            elizaLogger.debug(`Found setting ${key} in top-level settings`);
             return this.character.settings[key];
         }
 
-        // if not, check if it's in the settings object
+        // Finally check global settings
         if (settings[key]) {
+            elizaLogger.debug(`Found setting ${key} in global settings`);
             return settings[key];
         }
 
+        elizaLogger.warn(`Setting ${key} not found in any location`);
         return null;
     }
 
@@ -1022,8 +1056,9 @@ export class AgentRuntime implements IAgentRuntime {
                 .toLowerCase()
                 .replace("_", "");
 
-            elizaLogger.success(`Normalized action: ${normalizedAction}`);
+            elizaLogger.success(`Processing action: ${normalizedAction}`);
 
+            // Find matching action
             let action = this.actions.find(
                 (a: { name: string }) =>
                     a.name
@@ -1035,6 +1070,7 @@ export class AgentRuntime implements IAgentRuntime {
                     ),
             );
 
+            // Try similes if no exact match
             if (!action) {
                 elizaLogger.info("Attempting to find action in similes.");
                 for (const _action of this.actions) {
@@ -1075,9 +1111,25 @@ export class AgentRuntime implements IAgentRuntime {
                 elizaLogger.info(
                     `Executing handler for action: ${action.name}`,
                 );
-                await action.handler(this, message, state, {}, callback);
+                const result = await action.handler(this, message, state, {}, callback);
+
+                // Check if this action created a new memory with a different action
+                const recentMemories = await this.messageManager.getMemories({
+                    roomId: message.roomId,
+                    count: 1,
+                    unique: false
+                });
+
+                const lastMemory = recentMemories[0];
+                if (lastMemory?.content?.action && lastMemory.content.action !== action.name) {
+                    // Process the chained action
+                    elizaLogger.info(
+                        `Action ${action.name} chained to ${lastMemory.content.action}, processing...`,
+                    );
+                    await this.processActions(message, [lastMemory], state, callback);
+                }
             } catch (error) {
-                elizaLogger.error(error);
+                elizaLogger.error(`Error executing action ${action.name}:`, error);
             }
         }
     }
@@ -1368,7 +1420,7 @@ Text: ${attachment.text}
         // Assuming this.lore is an array of lore bits
         if (this.character.lore && this.character.lore.length > 0) {
             const shuffledLore = [...this.character.lore].sort(
-                () => Math.random() - 0.5,
+                () => 0.5 - Math.random(),
             );
             const selectedLore = shuffledLore.slice(0, 10);
             lore = selectedLore.join("\n");

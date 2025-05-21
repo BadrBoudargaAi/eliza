@@ -74,11 +74,13 @@ export class DocxPlugin implements Plugin {
             {
                 name: 'docx.generateDocument',
                 similes: ['create document', 'generate document', 'create doc', 'make document', 'write document'],
-                description: 'Generates a Word document with provided content',
-                handler: async (runtime: IAgentRuntime, message: Memory) => {
+                description: 'Generates a Word document with provided content',                handler: async (runtime: IAgentRuntime, message: Memory) => {
                     try {
+                        elizaLogger.info('DocX handler called with message:', message);
                         const data = message.content.data as GenerateDocData;
+                        elizaLogger.info('Parsed document data:', data);
                         if (!data || !data.fileName || !Array.isArray(data.content)) {
+                            elizaLogger.error('Invalid data structure:', { data });
                             throw new Error('Invalid document data structure');
                         }
 

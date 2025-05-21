@@ -22,7 +22,8 @@
   },
   "dependencies": {
     "@elizaos/core": "workspace:*",
-    "docx": "^8.6.0"
+    "docx": "^8.6.0",
+    "jira.js": "^5.2.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

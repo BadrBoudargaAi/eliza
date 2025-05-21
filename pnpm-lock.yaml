@@ -113,6 +113,9 @@ importers:
       jest:
         specifier: ^29.7.0
         version: 29.7.0(@types/node@22.15.18)(ts-node@10.9.2(@swc/core@1.11.24)(@types/node@22.15.18)(typescript@5.6.3))
+      jira.js:
+        specifier: ^5.2.0
+        version: 5.2.0
       lerna:
         specifier: 8.1.5
         version: 8.1.5(@swc/core@1.11.24)(encoding@0.1.13)
@@ -164,6 +167,9 @@ importers:
       '@types/node':
         specifier: ^22.13.5
         version: 22.15.18
+      jira.js:
+        specifier: ^5.2.0
+        version: 5.2.0
       json5:
         specifier: 2.2.3
         version: 2.2.3
@@ -240,6 +246,9 @@ importers:
       dayjs:
         specifier: ^1.11.13
         version: 1.11.13
+      jira.js:
+        specifier: ^5.2.0
+        version: 5.2.0
       lucide-react:
         specifier: ^0.469.0
         version: 0.469.0(react@19.1.0)
@@ -379,6 +388,9 @@ importers:
       dotenv:
         specifier: ^16.4.7
         version: 16.5.0
+      jira.js:
+        specifier: ^5.2.0
+        version: 5.2.0
       lodash:
         specifier: ^4.17.21
         version: 4.17.21
@@ -425,6 +437,9 @@ importers:
       '@types/pg':
         specifier: 8.11.10
         version: 8.11.10
+      jira.js:
+        specifier: ^5.2.0
+        version: 5.2.0
       pg:
         specifier: 8.13.1
         version: 8.13.1
@@ -447,6 +462,9 @@ importers:
       better-sqlite3:
         specifier: 11.8.1
         version: 11.8.1
+      jira.js:
+        specifier: ^5.2.0
+        version: 5.2.0
       sqlite-vec:
         specifier: 0.1.6
         version: 0.1.6
@@ -475,6 +493,9 @@ importers:
       commander:
         specifier: ^13.1.0
         version: 13.1.0
+      jira.js:
+        specifier: ^5.2.0
+        version: 5.2.0
 
   packages/client-direct:
     dependencies:
@@ -496,6 +517,9 @@ importers:
       express:
         specifier: 4.21.1
         version: 4.21.1
+      jira.js:
+        specifier: ^5.2.0
+        version: 5.2.0
       multer:
         specifier: 1.4.5-lts.1
         version: 1.4.5-lts.1
@@ -575,6 +599,9 @@ importers:
       handlebars:
         specifier: ^4.7.8
         version: 4.7.8
+      jira.js:
+        specifier: ^5.2.0
+        version: 5.2.0
       js-sha1:
         specifier: 0.7.0
         version: 0.7.0
@@ -625,13 +652,20 @@ importers:
         specifier: 5.6.3
         version: 5.6.3
 
-  packages/dynamic-imports: {}
+  packages/dynamic-imports:
+    dependencies:
+      jira.js:
+        specifier: ^5.2.0
+        version: 5.2.0
 
   packages/plugin-bootstrap:
     dependencies:
       '@elizaos/core':
         specifier: workspace:*
         version: link:../core
+      jira.js:
+        specifier: ^5.2.0
+        version: 5.2.0
       whatwg-url:
         specifier: 7.1.0
         version: 7.1.0
@@ -651,6 +685,9 @@ importers:
       docx:
         specifier: ^8.6.0
         version: 8.6.0
+      jira.js:
+        specifier: ^5.2.0
+        version: 5.2.0
     devDependencies:
       '@types/node':
         specifier: ^20.0.0
